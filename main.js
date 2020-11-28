@@ -15,14 +15,6 @@ const path = require('path');
  */
 const { getIpv4MappedIpv6Address } = require(path.join(__dirname, 'ipv6.js'));
 
-/**
- * Calculate and return the first host IP address from a CIDR subnet.
- * @param {string} cidrStr - The IPv4 subnet expressed
- *                 in CIDR format.
- * @param {callback} callback - A callback function.
- * @return {string} (firstIpAddress) - An IPv4 address.
- */
-
 class IpAddress {
   constructor() {
     // IAP's global log object is used to output errors, warnings, and other
@@ -30,15 +22,17 @@ class IpAddress {
     // For more information, consult the Log Class guide on the Itential
     // Developer Hub https://developer.itential.io/ located
     // under Documentation -> Developer Guides -> Log Class Guide
-    log.info('Starting the IpAddress product.');
+    console.log('Starting the IpAddress product.');
   }
   getFirstIpAddress(cidrStr, callback) {
 
   // Initialize return arguments for callback
   let firstIpAddress = null;
+  let mappedAddress = null;
   let callbackError = null;
+  const output = new Object();
 
-  // Instantiate an object from the imported class and assign the instance to variable cidr.
+  // Instantiate an objec3et from the imported class and assign the instance to variable cidr.
   const cidr = new IPCIDR(cidrStr);
   // Initialize options for the toArray() method.
   // We want an offset of one and a limit of one.
@@ -56,11 +50,23 @@ class IpAddress {
     // If the passed CIDR is valid, call the object's toArray() method.
     // Notice the destructering assignment syntax to get the value of the first array's element.
     [firstIpAddress] = cidr.toArray(options);
+    output['ipv4'] = firstIpAddress;
+    // Iterate over sampleIpv4s and pass the element's value to getIpv4MappedIpv6Address().
+    // Assign the function results to a variable so we can check if a string or null was returned.
+    output['ipv6'] = getIpv4MappedIpv6Address(firstIpAddress);
+    if( output['ipv6'] ) {
+      console.log(`  IPv4 ${firstIpAddress} mapped to IPv6 Address: ${output["ipv6"]}`);
+    } 
+    else {
+      console.error(`  Problem converting IPv4 ${output["ipv6"]} into a mapped IPv6 address.`);
+    }
   }
   // Call the passed callback function.
   // Node.js convention is to pass error data as the first argument to a callback.
   // The IAP convention is to pass returned data as the first argument and error
   // data as the second argument to the callback function.
-  return callback(firstIpAddress, callbackError);}
+
+  return callback(output, callbackError);
+  }
 }
 module.exports = new IpAddress;
